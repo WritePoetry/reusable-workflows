@@ -1,0 +1,47 @@
+name: Sync Folders to Server
+
+on:
+  workflow_call:
+    inputs:
+      ssh-host:
+        required: true
+        type: string
+      ssh-username:
+        required: true
+        type: string
+      ssh-folder:
+        required: true
+        type: string
+      sync-pairs:
+        required: true
+        type: string
+        description: "JSON array of {local: '', remote: '', exclude: ''} objects"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sync_pair:
+          - { local: 'themes', remote: '/themes/' }
+          - { local: 'mu-plugins', remote: '/mu-plugins/' }
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Setup SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -t rsa ${{ vars.SSH_HOST }} > ~/.ssh/known_hosts
+
+    - name: Sync ${{ matrix.sync_pair.local }}
+      run: |
+        exclude_cmd=""
+        if [ -n "${{ matrix.sync_pair.exclude }}" ]; then
+          exclude_cmd="--exclude='${{ matrix.sync_pair.exclude }}'"
+        fi
+
+        rsync -avz $exclude_cmd -e "ssh -i ~/.ssh/id_rsa" \
+            "./${{ matrix.sync_pair.local }}/" \
+            ${{ vars.SSH_USERNAME }}@${{ vars.SSH_HOST }}:"${{ vars.SSH_FOLDER }}${{ matrix.sync_pair.remote }}"
