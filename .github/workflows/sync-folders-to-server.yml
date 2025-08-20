@@ -43,11 +43,15 @@ jobs:
 
     - name: Sync ${{ matrix.sync_pair.local }}
       run: |
+        if [ ! -d "./${{ matrix.sync_pair.local }}" ]; then
+          exit 0
+        fi
+
         exclude_cmd=""
         if [ -n "${{ matrix.sync_pair.exclude }}" ]; then
           exclude_cmd="--exclude='${{ matrix.sync_pair.exclude }}'"
         fi
 
-        rsync -avz --ignore-missing-args $exclude_cmd -e "ssh -i ~/.ssh/id_rsa" \
+        rsync -avz $exclude_cmd -e "ssh -i ~/.ssh/id_rsa" \
             "./${{ matrix.sync_pair.local }}/" \
             ${{ inputs.ssh-username }}@${{ inputs.ssh-host }}:"${{ inputs.ssh-folder }}${{ matrix.sync_pair.remote }}"
