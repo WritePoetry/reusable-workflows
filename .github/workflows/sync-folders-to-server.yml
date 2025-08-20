@@ -48,6 +48,6 @@ jobs:
           exclude_cmd="--exclude='${{ matrix.sync_pair.exclude }}'"
         fi
 
-        rsync -avz $exclude_cmd -e "ssh -i ~/.ssh/id_rsa" \
+        rsync -avz --ignore-missing-args $exclude_cmd -e "ssh -i ~/.ssh/id_rsa" \
             "./${{ matrix.sync_pair.local }}/" \
             ${{ inputs.ssh-username }}@${{ inputs.ssh-host }}:"${{ inputs.ssh-folder }}${{ matrix.sync_pair.remote }}"
