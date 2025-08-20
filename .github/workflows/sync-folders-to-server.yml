@@ -17,8 +17,10 @@ on:
         type: string
         default: |
           [
-            {"local": "themes", "remote": "/themes/"},
-            {"local": "mu-plugins", "remote": "/mu-plugins/"}
+            {"local": "languages", "remote": "/languages/"},
+            {"local": "mu-plugins", "remote": "/mu-plugins/"},
+            {"local": "plugins", "remote": "/plugins/"},
+            {"local": "themes", "remote": "/themes/"}
           ]
         description: "JSON array of {local: '', remote: '', exclude: ''} objects"
     secrets:
