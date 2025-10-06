@@ -24,6 +24,7 @@ jobs:
         with:
           node-version-file: 'package.json'
           cache: npm
+          registry-url: 'https://npm.pkg.github.com/'
 
       - name: Cache node modules
         id: cache-npm
