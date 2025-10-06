@@ -83,6 +83,14 @@ jobs:
         run: |
           composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: 'package.json'
+          cache: npm
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@writepoetry'
+
       - name: Install packages
         run: npm ci
 
