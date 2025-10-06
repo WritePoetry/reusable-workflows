@@ -53,7 +53,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-output
-          path: ${{ inputs.artifacts_path }}
+          path: |
+            ${{ inputs.artifacts_path }}
+            node_modules/
 
   release:
     name: Create Release
@@ -63,9 +65,6 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Download Build Artifact
         if: ${{ inputs.artifacts_path != '' }}
         uses: actions/download-artifact@v4
@@ -86,7 +85,6 @@ jobs:
       - name: Zip Release Asset
         id: zip
         run: |
-          npm install
           npm run plugin-zip
           mv "$PACKAGE_NAME"{.zip,"-$VERSION.zip"}
           echo "zip_path=$PACKAGE_NAME-$VERSION" >> $GITHUB_OUTPUT
@@ -98,6 +96,4 @@ jobs:
         with:
           files: |
             ${{ steps.zip.outputs.zip_path }}.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
