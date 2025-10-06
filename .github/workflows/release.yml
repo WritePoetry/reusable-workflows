@@ -12,9 +12,9 @@ jobs:
     name: Create Build
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      contents: read
+      packages: read
+      actions: read
 
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
         with:
           node-version-file: 'package.json'
           cache: npm
-          registry-url: 'https://npm.pkg.github.com/'
+          registry-url: 'https://npm.pkg.github.com'
           scope: '@writepoetry'
 
       - name: Cache node modules
