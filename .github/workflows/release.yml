@@ -25,7 +25,7 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@writepoetry'
           always-auth: true
-            token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cache node modules
         id: cache-npm
