@@ -53,9 +53,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-output
-          path: |
-            ${{ inputs.artifacts_path }}
-            node_modules/
+          path: ${{ inputs.artifacts_path }}
 
   release:
     name: Create Release
@@ -85,6 +83,9 @@ jobs:
         run: |
           composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
+      - name: Install packages
+        run: npm ci
+
       - name: Zip Release Asset
         id: zip
         run: |
@@ -92,6 +93,7 @@ jobs:
           mv "$PACKAGE_NAME"{.zip,"-$VERSION.zip"}
           echo "zip_path=$PACKAGE_NAME-$VERSION" >> $GITHUB_OUTPUT
         working-directory: ${{ github.workspace }}
+        
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -99,4 +101,5 @@ jobs:
         with:
           files: |
             ${{ steps.zip.outputs.zip_path }}.zip
+
 
