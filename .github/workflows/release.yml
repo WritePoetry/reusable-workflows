@@ -43,12 +43,11 @@ jobs:
         continue-on-error: true
         run: npm list
 
-      - name: Print token length (debug only)
-        run: echo "${#NODE_AUTH_TOKEN}" 
-
       - name: Install packages
         run: npm install
-
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+          
       - run: npm run build --if-present
 
       - name: Upload Build Artifact
