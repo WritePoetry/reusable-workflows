@@ -24,6 +24,8 @@ jobs:
         with:
           node-version-file: 'package.json'
           cache: npm
+          registry-url: 'https://npm.pkg.github.com/'
+          scope: '@writepoetry'
 
       - name: Cache node modules
         id: cache-npm
@@ -37,8 +39,6 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
-      - name: Authenticate with GitHub Packages Registry
-        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > ~/.npmrc
 
       - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
         name: List the state of node modules
@@ -47,6 +47,8 @@ jobs:
 
       - name: Install packages
         run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: npm run build --if-present
 
