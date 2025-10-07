@@ -17,15 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: 'package.json'
-          cache: npm
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@writepoetry'
-          always-auth: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Use Node.js
+        uses: ./.github/actions/setup-node
 
       - name: Cache node modules
         id: cache-npm
@@ -85,13 +78,7 @@ jobs:
         run: |
           composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: 'package.json'
-          cache: npm
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@writepoetry'
+      - uses: ./.github/actions/setup-node
 
       - name: Install packages
         run: npm ci
