@@ -9,7 +9,7 @@ on:
         type: string
       actions_repo:
         type: string
-        default: 'WritePoetry/reusable-workflow'
+        default: 'WritePoetry/reusable-workflows'
 jobs:
   build:
     name: Create Build
