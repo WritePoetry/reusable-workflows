@@ -7,6 +7,7 @@ on:
         description: 'Path to artifacts directory'
         required: false
         type: string
+        default: 'build'
 jobs:
   build:
     name: Create Build
@@ -21,17 +22,11 @@ jobs:
 
       - name: Use Node.js
         uses: actions/setup-node@v4
-        id: node
         with:
           node-version-file: 'package.json'
           cache: npm
           registry-url: 'https://npm.pkg.github.com'
           scope: '@writepoetry'
-
-      - if: ${{ steps.node.outputs.cache-hit != 'true' }}
-        name: List the state of node modules
-        continue-on-error: true
-        run: npm list
 
       - name: Install dependencies
         run: npm ci
@@ -39,6 +34,29 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: npm run build --if-present
+      
+      - name: Composer install
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Setup environment
+        id: vars
+        run: |
+          echo "PACKAGE_NAME=$(jq -r .name package.json)" >> $GITHUB_ENV
+          echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Zip Release Asset
+        id: zip
+        run: |
+          npm run plugin-zip
+          mv "$PACKAGE_NAME"{.zip,"-$VERSION.zip"}
+          echo "zip_path=$PACKAGE_NAME-$VERSION" >> $GITHUB_OUTPUT
+        working-directory: ${{ github.workspace }}
+     
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: ${{ inputs.artifacts_path }}
    
   release:
     name: Create Release
@@ -49,24 +67,19 @@ jobs:
       packages: read
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        id: node
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
         with:
-          node-version-file: 'package.json'
-          cache: npm
+          name: build-output
+          path: ${{ inputs.artifacts_path }}
 
-      - if: ${{ steps.node.outputs.cache-hit != 'true' }}
-        name: List the state of node modules
-        continue-on-error: true
-        run: npm list
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ${{ inputs.artifacts_path }}/*.zip
 
-      - name: Install dependencies
-        run: npm ci
-      
+
 
 
 
