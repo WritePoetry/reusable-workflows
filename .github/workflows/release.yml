@@ -7,9 +7,6 @@ on:
         description: 'Path to artifacts directory'
         required: false
         type: string
-      actions_repo:
-        type: string
-        default: 'WritePoetry/reusable-workflows'
 jobs:
   build:
     name: Create Build
@@ -18,42 +15,18 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v5
-       
-      - uses: ./.github/actions/setup-node
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
         with:
-            repository: ${{ inputs.actions_repo }}
+          node-version-file: 'package.json'
+          cache: npm
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@writepoetry'
+
       
-      - name: Cache node modules
-        id: cache-npm
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-
-      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
-        name: List the state of node modules
-        continue-on-error: true
-        run: npm list
-
-      - name: Install packages
-        run: npm install
-
-      - run: npm run build --if-present
-
-      - name: Upload Build Artifact
-        if: ${{ inputs.artifacts_path != '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output
-          path: ${{ inputs.artifacts_path }}
-
   release:
     name: Create Release
     runs-on: ubuntu-latest
@@ -62,45 +35,19 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Download Build Artifact
-        if: ${{ inputs.artifacts_path != '' }}
-        uses: actions/download-artifact@v5
+      - name: Use Node.js
+        uses: actions/setup-node@v4
         with:
-          name: build-output
-          path: ${{ inputs.artifacts_path }}
+          node-version-file: 'package.json'
+          cache: npm
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@writepoetry'
 
-      - name: Setup environment
-        id: vars
-        run: |
-          echo "PACKAGE_NAME=$(jq -r .name package.json)" >> $GITHUB_ENV
-          echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
-      - name: Composer install
-        run: |
-          composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-      - uses: ./.github/actions/setup-node
-
-      - name: Install packages
-        run: npm ci
-
-      - name: Zip Release Asset
-        id: zip
-        run: |
-          npm run plugin-zip
-          mv "$PACKAGE_NAME"{.zip,"-$VERSION.zip"}
-          echo "zip_path=$PACKAGE_NAME-$VERSION" >> $GITHUB_OUTPUT
-        working-directory: ${{ github.workspace }}
-        
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: |
-            ${{ steps.zip.outputs.zip_path }}.zip
+    
 
 
