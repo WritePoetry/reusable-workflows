@@ -22,9 +22,6 @@ jobs:
         with:
           repository: ${{ inputs.actions_repo }}
       - uses: ./.github/actions/setup-node
-        with:
-          repository: ${{ inputs.actions_repo }}
-
 
       - name: Cache node modules
         id: cache-npm
