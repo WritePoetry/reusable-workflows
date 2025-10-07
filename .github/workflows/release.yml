@@ -21,17 +21,25 @@ jobs:
 
       - name: Use Node.js
         uses: actions/setup-node@v4
+        id: node
         with:
           node-version-file: 'package.json'
           cache: npm
           registry-url: 'https://npm.pkg.github.com'
           scope: '@writepoetry'
 
+      - if: ${{ steps.node.outputs.cache-hit != 'true' }}
+        name: List the state of node modules
+        continue-on-error: true
+        run: npm list
+
       - name: Install dependencies
         run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
+      - run: npm run build --if-present
+   
   release:
     name: Create Release
     runs-on: ubuntu-latest
@@ -46,10 +54,16 @@ jobs:
 
       - name: Use Node.js
         uses: actions/setup-node@v4
+        id: node
         with:
           node-version-file: 'package.json'
           cache: npm
-      
+
+      - if: ${{ steps.node.outputs.cache-hit != 'true' }}
+        name: List the state of node modules
+        continue-on-error: true
+        run: npm list
+
       - name: Install dependencies
         run: npm ci
       
