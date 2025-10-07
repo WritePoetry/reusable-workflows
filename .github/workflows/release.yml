@@ -26,6 +26,8 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@writepoetry'
 
+      - name: Install dependencies
+        run: npm ci
       
   release:
     name: Create Release
@@ -45,6 +47,10 @@ jobs:
           cache: npm
           registry-url: 'https://npm.pkg.github.com'
           scope: '@writepoetry'
+      
+      - name: Install dependencies
+        run: npm ci
+      
 
 
 
