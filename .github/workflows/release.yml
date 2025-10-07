@@ -78,7 +78,7 @@ jobs:
         run: |
           composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-      - uses: ./.github/actions/setup-node
+      - uses: WritePoetry/reusable-workflows/.github/actions/setup-node
 
       - name: Install packages
         run: npm ci
