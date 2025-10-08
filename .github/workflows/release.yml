@@ -16,7 +16,7 @@ jobs:
       contents: write
       packages: read
     outputs:
-      zip_path: ${{ steps.zip.outputs.zip_path }}
+      artifact_file: ${{ steps.zip.outputs.artifact_file }}
       
     steps:
       - name: Checkout
@@ -48,14 +48,8 @@ jobs:
           npm run plugin-zip
           
           mv "$PACKAGE_NAME"{.zip,"-$VERSION.zip"}
-          echo "zip_path=$PACKAGE_NAME-$VERSION" >> $GITHUB_OUTPUT
+          echo "artifact_file=${{ github.workspace }}/${PACKAGE_NAME}-${VERSION}.zip" >> $GITHUB_OUTPUT
         working-directory: ${{ github.workspace }}
-     
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output
-          path: ${{ inputs.artifacts_path }}
    
   release:
     name: Create Release
@@ -67,14 +61,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v5
-        with:
-          name: build-output
-          path: ${{ inputs.artifacts_path }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ${{ needs.build.outputs.zip_path }}
+          files: ${{ needs.build.outputs.artifact_file }}
 
