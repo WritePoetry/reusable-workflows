@@ -2,6 +2,12 @@ name: Reusable PHP/WordPress Tests
 
 on:
   workflow_call:
+    inputs:
+      php_versions:
+        description: "List of PHP versions for the test matrix"
+        required: false
+        type: string
+        default: "['7.4', '8.0', '8.1', '8.2']"
 
 jobs:
   test:
@@ -9,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-versions: ['7.4', '8.0', '8.1', '8.2']
+        php-versions: ${{ fromJson(inputs.php_versions) }}
 
     services:
       mysql:
@@ -26,7 +32,7 @@ jobs:
           --health-retries=3
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shivammathur/setup-php@v2
         with:
