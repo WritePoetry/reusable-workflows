@@ -50,7 +50,7 @@ jobs:
         run: |
           mysql --user=root --password=root --host=127.0.0.1 --execute="DROP DATABASE IF EXISTS wordpress_test; CREATE DATABASE wordpress_test;"
           rm -rf /tmp/wordpress-tests-lib /tmp/wordpress
-          bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1 latest
+          yes y | bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1 latest
 
       - name: Run PHPCS if WPCS installed     
         run: |
