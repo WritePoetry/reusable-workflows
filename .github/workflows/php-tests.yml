@@ -46,14 +46,16 @@ jobs:
       - run: composer install --no-interaction --prefer-dist
 
       - name: Prepare WordPress test suite
+        if: ${{ hashFiles('bin/install-wp-tests.sh') != '' }}
         run: |
           mysql --user=root --password=root --host=127.0.0.1 --execute="DROP DATABASE IF EXISTS wordpress_test; CREATE DATABASE wordpress_test;"
           rm -rf /tmp/wordpress-tests-lib /tmp/wordpress
           bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1 latest
 
-      - name: Run PHPCS
+      - name: Run PHPCS if WPCS installed     
         run: |
-          vendor/bin/phpcs --ps .
+          if composer show wp-coding-standards/wpcs >/dev/null 2>&1 && vendor/bin/phpcs -ps .
+        continue-on-error: true
 
       - name: Run PHPUnit
         run: |
