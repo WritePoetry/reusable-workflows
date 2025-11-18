@@ -48,6 +48,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           npm run plugin-zip
           if [ -f "$PACKAGE_NAME.zip" ]; then
+            echo "testing file exists"
             mv "$PACKAGE_NAME"{.zip,"-$VERSION.zip"}
             echo "artifact_file=${{ github.workspace }}/${PACKAGE_NAME}-${VERSION}.zip" >> $GITHUB_OUTPUT
           else
