@@ -35,7 +35,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: npm run build --if-present
+      - name: Build Project
+        run: npm run build --if-present
       
       - name: Composer install
         run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
@@ -46,9 +47,13 @@ jobs:
           PACKAGE_NAME=$(jq -r .name package.json)
           VERSION="${GITHUB_REF_NAME#v}"
           npm run plugin-zip
-          
-          mv "$PACKAGE_NAME"{.zip,"-$VERSION.zip"}
-          echo "artifact_file=${{ github.workspace }}/${PACKAGE_NAME}-${VERSION}.zip" >> $GITHUB_OUTPUT
+          if [ -f "$PACKAGE_NAME.zip" ]; then
+            mv "$PACKAGE_NAME"{.zip,"-$VERSION.zip"}
+            echo "artifact_file=${{ github.workspace }}/${PACKAGE_NAME}-${VERSION}.zip" >> $GITHUB_OUTPUT
+          else
+            echo "Error: zip file not found!" >&2
+            exit 1
+          fi
         working-directory: ${{ github.workspace }}
    
   release:
@@ -60,7 +65,8 @@ jobs:
       packages: read
 
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
