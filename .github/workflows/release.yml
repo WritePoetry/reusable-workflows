@@ -3,11 +3,12 @@ name: Reusable Release Workflow
 on:
   workflow_call:
     inputs:
-      artifacts_path:
-        description: 'Path to artifacts directory'
+      output_dir:
+        description: 'Directory where build artifacts are placed'
         required: false
         type: string
         default: 'build'
+
 jobs:
   build:
     name: Create Build
@@ -16,7 +17,7 @@ jobs:
       contents: write
       packages: read
     outputs:
-      artifact_file: ${{ steps.zip.outputs.artifact_file }}
+      package_file: ${{ steps.zip.outputs.file }}
       
     steps:
       - name: Checkout
@@ -35,7 +36,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Project
+      - name: Build project
         run: npm run build --if-present
       
       - name: Composer install
@@ -47,16 +48,17 @@ jobs:
           PACKAGE_NAME=$(jq -r .name package.json)
           VERSION="${GITHUB_REF_NAME#v}"
           npm run plugin-zip
-          if [ -f "$PACKAGE_NAME.zip" ]; then
-            echo "testing file exists"
-            mv "$PACKAGE_NAME"{.zip,"-$VERSION.zip"}
-            echo "artifact_file=${{ github.workspace }}/${PACKAGE_NAME}-${VERSION}.zip" >> $GITHUB_OUTPUT
-          else
-            echo "Error: zip file not found!" >&2
-            exit 1
-          fi
+          
+          mv "$PACKAGE_NAME"{.zip,"-$VERSION.zip"}
+          echo "file=${PACKAGE_NAME}-${VERSION}.zip" >> $GITHUB_OUTPUT
         working-directory: ${{ github.workspace }}
-   
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: ${{ github.workspace }}/${{ steps.zip.outputs.file }}
+  
   release:
     name: Create Release
     runs-on: ubuntu-latest
@@ -69,9 +71,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Download Build Artifact 
+        uses: actions/download-artifact@v4 
+        with: 
+          name: build-output
+          path: ${{ inputs.output_dir }}
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ${{ needs.build.outputs.artifact_file }}
+          files: ${{ inputs.output_dir }}/${{ needs.build.outputs.package_file }}
 
