@@ -42,7 +42,7 @@ jobs:
       - name: Composer install
         run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
          
-      - name: Zip Release Asset
+      - name: Zip release asset
         id: zip
         run: |
           PACKAGE_NAME=$(jq -r .name package.json)
@@ -53,7 +53,7 @@ jobs:
           echo "file=${PACKAGE_NAME}-${VERSION}.zip" >> $GITHUB_OUTPUT
         working-directory: ${{ github.workspace }}
 
-      - name: Upload Build Artifact
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: build-output
@@ -71,13 +71,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Download Build Artifact 
+      - name: Download build artifact
         uses: actions/download-artifact@v4 
         with: 
           name: build-output
           path: ${{ inputs.output_dir }}
 
-      - name: Create GitHub Release
+      - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
