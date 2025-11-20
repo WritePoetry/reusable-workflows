@@ -8,6 +8,11 @@ on:
         required: false
         type: string
         default: "['7.4', '8.0', '8.1', '8.2']"
+      phpunit9_config:
+        description: "Configuration file only for PHPUnit 9"
+        required: false
+        type: string
+        default: phpunit-9.xml
 
 jobs:
   test:
@@ -32,7 +37,8 @@ jobs:
           --health-retries=3
 
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout code
+        uses: actions/checkout@v5
 
       - name: Install SVN
         run: sudo apt-get update && sudo apt-get install -y subversion
@@ -43,7 +49,8 @@ jobs:
           extensions: mysqli
           coverage: none
 
-      - run: composer install --no-interaction --prefer-dist
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
 
       - name: Prepare WordPress test suite
         if: ${{ hashFiles('bin/install-wp-tests.sh') != '' }}
@@ -56,7 +63,16 @@ jobs:
         run: composer show wp-coding-standards/wpcs >/dev/null 2>&1 && vendor/bin/phpcs -ps .
         # continue-on-error: true
 
-      - name: Run PHPUnit
+      - name: Detect PHPUnit version and run tests
         run: |
-          vendor/bin/phpunit
-          WP_MULTISITE=1 vendor/bin/phpunit
+          PHPUNIT_VERSION=$(vendor/bin/phpunit --version | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | cut -d. -f1)
+          PHPUNIT_CONFIG="${{ inputs.phpunit9_config }}"
+
+          if [ "$PHPUNIT_VERSION" = "9" ] && [ -f phpunit-9.xml ]; then
+            PHPUNIT_CONFIG="-c phpunit-9.xml"
+          else
+            PHPUNIT_CONFIG=""
+          fi
+
+          vendor/bin/phpunit $PHPUNIT_CONFIG
+          WP_MULTISITE=1 vendor/bin/phpunit $PHPUNIT_CONFIG 
