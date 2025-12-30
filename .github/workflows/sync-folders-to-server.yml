@@ -3,26 +3,26 @@ name: Sync Folders to Server
 on:
   workflow_call:
     inputs:
-      ssh-host:
+      host:
         required: true
         type: string
-      ssh-username:
+      username:
         required: true
         type: string
-      ssh-folder:
+      folder:
         required: true
         type: string
-      sync-pairs:
+      paths:
         required: false
         type: string
         default: |
           [
-            {"local": "languages", "remote": "/languages/"},
-            {"local": "mu-plugins", "remote": "/mu-plugins/"},
-            {"local": "plugins", "remote": "/plugins/"},
-            {"local": "themes", "remote": "/themes/"}
+            {"from": "languages", "to": "/languages/"},
+            {"from": "mu-plugins", "to": "/mu-plugins/"},
+            {"from": "plugins", "to": "/plugins/"},
+            {"from": "themes", "to": "/themes/"}
           ]
-        description: "JSON array of {local: '', remote: '', exclude: ''} objects"
+        description: "JSON array of {from: '', to: '', exclude: ''} objects"
     secrets:
       ssh-key:
         required: true
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        sync_pair: ${{ fromJson(inputs.sync-pairs) }}
+        sync_pair: ${{ fromJson(inputs.paths) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -42,11 +42,11 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.ssh-key }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -t rsa ${{ inputs.ssh-host }} > ~/.ssh/known_hosts
+          ssh-keyscan -t rsa ${{ inputs.host }} > ~/.ssh/known_hosts
 
-      - name: Sync ${{ matrix.sync_pair.local }}
+      - name: Sync ${{ matrix.sync_pair.from }}
         run: |
-          if [ ! -d "./${{ matrix.sync_pair.local }}" ]; then
+          if [ ! -d "./${{ matrix.sync_pair.from }}" ]; then
             exit 0
           fi
 
@@ -57,6 +57,8 @@ jobs:
             done
           fi
 
+          CLEAN_FOLDER=$(echo "${{ inputs.folder }}" | sed 's:/*$::')
+
           rsync -rvz $EXCLUDE_ARGS -e "ssh -i ~/.ssh/id_rsa" \
-              "./${{ matrix.sync_pair.local }}/" \
-              ${{ inputs.ssh-username }}@${{ inputs.ssh-host }}:"${{ inputs.ssh-folder }}${{ matrix.sync_pair.remote }}"
+              "./${{ matrix.sync_pair.from }}/" \
+              ${{ inputs.username }}@${{ inputs.host }}:"$CLEAN_FOLDER${{ matrix.sync_pair.to }}"

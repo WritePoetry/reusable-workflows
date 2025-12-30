@@ -111,10 +111,10 @@ Synchronizes selected local directories to a remote server using SSH and rsync. 
 
 | Name | Description | Required | Default |
 | --- | --- | --- | --- |
-| `ssh-host` | Remote server host | Yes | — |
-| `ssh-username` | SSH username for the remote server | Yes | — |
-| `ssh-folder` | Base folder on the remote server where synchronization occurs | Yes | — |
-| `sync-pairs` | JSON array of `{local, remote, exclude}` mappings | No | Default WordPress structure |
+| `host` | Remote server host | Yes | — |
+| `username` | SSH username for the remote server | Yes | — |
+| `folder` | Base folder on the remote server where synchronization occurs | Yes | — |
+| `paths` | JSON array of `{from, to, exclude}` mappings | No | Default WordPress structure |
 
 ### Secrets
 
@@ -129,13 +129,13 @@ jobs:
   deploy_files:
     uses: WritePoetry/reusable-workflows/.github/workflows/sync-folders.yml@v1
     with:
-      ssh-host: example.com
-      ssh-username: deploy
-      ssh-folder: /var/www/html/wp-content
-      sync-pairs: |
+      host: example.com
+      username: deploy
+      folder: /var/www/html/wp-content
+      paths: |
         [
-          {"local": "themes", "remote": "/themes/"},
-          {"local": "plugins", "remote": "/plugins/", "exclude": "node_modules"}
+          {"from": "themes", "to": "/themes/"},
+          {"from": "plugins", "to": "/plugins/", "exclude": ".git* node_modules"}
         ]
     secrets:
       ssh-key: ${{ secrets.SERVER_SSH_DEPLOY_KEY }}
