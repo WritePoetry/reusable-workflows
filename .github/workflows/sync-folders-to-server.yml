@@ -50,11 +50,13 @@ jobs:
             exit 0
           fi
 
-          exclude_cmd=""
+          EXCLUDE_ARGS=""
           if [ -n "${{ matrix.sync_pair.exclude }}" ]; then
-            exclude_cmd="--exclude='${{ matrix.sync_pair.exclude }}'"
+            for item in ${{ matrix.sync_pair.exclude }}; do
+              EXCLUDE_ARGS="$EXCLUDE_ARGS --exclude=$item"
+            done
           fi
 
-          rsync -rvz $exclude_cmd -e "ssh -i ~/.ssh/id_rsa" \
+          rsync -rvz $EXCLUDE_ARGS -e "ssh -i ~/.ssh/id_rsa" \
               "./${{ matrix.sync_pair.local }}/" \
               ${{ inputs.ssh-username }}@${{ inputs.ssh-host }}:"${{ inputs.ssh-folder }}${{ matrix.sync_pair.remote }}"
