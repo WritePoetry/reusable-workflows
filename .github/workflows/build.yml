@@ -1,0 +1,58 @@
+name: Build Workflow
+
+on:
+  workflow_call:
+    inputs:
+      artifact_name:
+        description: 'The name of the artifact to upload'
+        required: false
+        type: string
+        default: ${{ github.event.repository.name }}-build
+      paths:
+        description: 'Files or folders to exclude from the artifact'
+        required: false
+        type: string
+        default: |
+          !.git
+          !.github
+          !node_modules
+jobs:
+  build:
+    name: Create Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+      
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: 'package.json'
+          cache: npm
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@writepoetry'
+
+      - name: Install NPM Dependencies
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build project
+        run: npm run build --if-present
+
+      - name: Install Composer Dependencies
+        if: hashFiles('composer.json') != ''
+        run: composer install --no-dev --no-interaction --optimize-autoloader
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: |
+            ./
+            ${{ inputs.paths }}
+          retention-days: 1
