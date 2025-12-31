@@ -23,6 +23,10 @@ on:
             {"from": "themes", "to": "/themes/"}
           ]
         description: "JSON array of {from: '', to: '', exclude: ''} objects"
+      artifact_name:
+        type: string
+        required: false
+        default: ${{ github.event.repository.name }}-build
     secrets:
       ssh-key:
         required: true
@@ -36,7 +40,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+      
+      - name: Download Build Artifacts
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: .
 
+          
+      
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh

@@ -37,6 +37,7 @@ jobs:
           scope: '@writepoetry'
 
       - name: Install NPM Dependencies
+        if: hashFiles('package.json') != ''
         run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
