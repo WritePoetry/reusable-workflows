@@ -26,7 +26,7 @@ on:
       artifact_name:
         type: string
         required: false
-        default: ${{ github.event.repository.name }}-build
+        default: ''
     secrets:
       ssh-key:
         required: true
@@ -42,24 +42,23 @@ jobs:
         uses: actions/checkout@v5
       
       - name: Download Build Artifacts
-        continue-on-error: true
+        if: ${{ inputs.artifact_name != '' }}
         uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.artifact_name }}
           path: .
 
-          
-      
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.ssh-key }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -t rsa ${{ inputs.host }} > ~/.ssh/known_hosts
+          ssh-keyscan -t rsa ${{ inputs.host }} >> ~/.ssh/known_hosts
 
       - name: Sync ${{ matrix.sync_pair.from }}
         run: |
-          if [ ! -d "./${{ matrix.sync_pair.from }}" ]; then
+          if [ ! -d "./${{ matrix.sync_pair.from }}" ] && [ ! -f "./${{ matrix.sync_pair.from }}" ]; then
+            echo "Source ${{ matrix.sync_pair.from }} not found. Skip."
             exit 0
           fi
 

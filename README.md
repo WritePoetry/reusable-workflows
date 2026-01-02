@@ -127,7 +127,7 @@ Synchronizes selected local directories to a remote server using SSH and rsync. 
 ```yaml
 jobs:
   deploy_files:
-    uses: WritePoetry/reusable-workflows/.github/workflows/sync-folders.yml@v1
+    uses: WritePoetry/reusable-workflows/.github/workflows/remote-sync.yml@v1
     with:
       host: example.com
       username: deploy
