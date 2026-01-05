@@ -3,66 +3,14 @@ name: Reusable Release Workflow
 on:
   workflow_call:
     inputs:
-      output_dir:
-        description: 'Directory where build artifacts are placed'
-        required: false
+      artifact_zip_name:
         type: string
-        default: 'build'
+        default: 'release-zip'
 
 jobs:
-  build:
-    name: Create Build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: read
-    outputs:
-      package_file: ${{ steps.zip.outputs.file }}
-      
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: 'package.json'
-          cache: npm
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@writepoetry'
-
-      - name: Install dependencies
-        run: npm ci
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build project
-        run: npm run build --if-present
-      
-      - name: Composer install
-        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
-         
-      - name: Zip release asset
-        id: zip
-        run: |
-          PACKAGE_NAME=$(jq -r .name package.json)
-          VERSION="${GITHUB_REF_NAME#v}"
-          npm run plugin-zip
-          
-          mv "$PACKAGE_NAME"{.zip,"-$VERSION.zip"}
-          echo "file=${PACKAGE_NAME}-${VERSION}.zip" >> $GITHUB_OUTPUT
-        working-directory: ${{ github.workspace }}
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output
-          path: ${{ github.workspace }}/${{ steps.zip.outputs.file }}
-  
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: build
     permissions:
       contents: write
       packages: read
@@ -70,16 +18,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Download build artifact
         uses: actions/download-artifact@v4 
-        with: 
-          name: build-output
-          path: ${{ inputs.output_dir }}
+        with:
+          name: ${{ inputs.artifact_zip_name }}
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ${{ inputs.output_dir }}/${{ needs.build.outputs.package_file }}
-
+          files: ./*.zip
+          generate_release_notes: true
