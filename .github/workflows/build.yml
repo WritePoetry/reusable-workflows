@@ -8,6 +8,11 @@ on:
         required: false
         type: string
         default: ${{ github.event.repository.name }}-build
+      create_zip:
+        description: 'Se impostato a true, genera lo zip'
+        required: false
+        type: boolean
+        default: false
       paths:
         description: 'Files or folders to exclude from the artifact'
         required: false
@@ -51,10 +56,11 @@ jobs:
 
       - name: Prepare Zip Asset
         id: zip
-        if: startsWith(github.ref, 'refs/tags/') # Lo fa solo se stai creando una release
+        if: ${{ inputs.create_zip }}
         run: |
           PACKAGE_NAME=$(jq -r .name package.json)
           VERSION="${GITHUB_REF_NAME#v}"
+          
           npm run plugin-zip
           
           mv "$PACKAGE_NAME"{.zip,"-$VERSION.zip"}
@@ -62,10 +68,20 @@ jobs:
         # working-directory: ${{ github.workspace }}
 
       - name: Upload Build Artifact
+        if: ${{ inputs.artifact_name != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact_name }}
           path: |
             ./
             ${{ inputs.paths }}
+          retention-days: 1
+
+      - name: Upload Zip Artifact
+        if: ${{ inputs.create_zip }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-zip
+          path: ./*.zip
+          if-no-files-found: error
           retention-days: 1
