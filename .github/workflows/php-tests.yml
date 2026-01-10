@@ -15,7 +15,30 @@ on:
         default: phpunit-9.xml
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.2']
+    steps:
+    - name: Check out source code
+      uses: actions/checkout@v5
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        tools: composer
+
+    - name: Install dependencies
+      run: composer install --no-interaction --prefer-dist
+
+    - name: Run PHPCS    
+      run: vendor/bin/phpcs -ps .
+      # continue-on-error: true  
+
   test:
+    needs: lint
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -58,10 +81,6 @@ jobs:
           mysql --user=root --password=root --host=127.0.0.1 --execute="DROP DATABASE IF EXISTS wordpress_test; CREATE DATABASE wordpress_test;"
           rm -rf /tmp/wordpress-tests-lib /tmp/wordpress
           yes y | bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1 latest
-
-      - name: Run PHPCS if WPCS installed     
-        run: composer show wp-coding-standards/wpcs >/dev/null 2>&1 && vendor/bin/phpcs -ps .
-        # continue-on-error: true
 
       - name: Detect PHPUnit version and run tests
         run: |
